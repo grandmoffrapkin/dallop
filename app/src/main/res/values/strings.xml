@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">Dallop</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <!--    Permissions Activity-->
+
+    <string name="ask_permissions">In order to run the app seamlessly Dallop requires some permissions. Click next below and accept the permissions to continue.</string>
+
+    <!--    Menu Activity-->
+
+    <string name="menu_home">Home</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="menu_logout">Logout</string>
+
+    <!--    Login Activity-->
+
+    <string name="verify_phone">Verify your phone number</string>
+    <string name="verify_phone_warning">You\'ll get a code via SMS. Operator charges may apply</string>
+    <string name="enter_number_hint">Enter your number</string>
+    <string name="country_code_hint">Country code</string>
+    <string name="default_country_code">India (+91)</string>
+    <string name="otp_hint">Enter OTP</string>
+
+</resources>
