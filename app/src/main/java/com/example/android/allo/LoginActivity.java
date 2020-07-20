@@ -1,8 +1,5 @@
 package com.example.android.allo;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -30,30 +27,37 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
 public class LoginActivity extends AppCompatActivity {
 
     private EditText mPhoneNumber, mOTP;
     private PhoneAuthProvider.OnVerificationStateChangedCallbacks mCallbacks;
-    private Button mNext;
 
     String mVerificationId;
+
+    private View progressOverlay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        getSupportActionBar().hide();
+
         FirebaseApp.initializeApp(this);
 
         userIsLoggedIn();
 
         mPhoneNumber = findViewById(R.id.phone_number);
         mOTP = findViewById(R.id.otp);
-        mNext = findViewById(R.id.next);
+        Button mNext = findViewById(R.id.next);
+        progressOverlay = findViewById(R.id.progress_overlay);
 
         mNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(mVerificationId != null)
+                if (mVerificationId != null)
                     verifyPhoneNumberWithCode();
                 else startPhoneNumberVerification();
             }
@@ -67,7 +71,10 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if(s.toString().length() == 10) startPhoneNumberVerification();
+                if (s.toString().length() == 10) {
+                    progressOverlay.setVisibility(View.VISIBLE);
+                    startPhoneNumberVerification();
+                }
             }
 
             @Override
@@ -91,6 +98,7 @@ public class LoginActivity extends AppCompatActivity {
             public void onCodeSent(@NonNull String s, @NonNull PhoneAuthProvider.ForceResendingToken forceResendingToken) {
                 super.onCodeSent(s, forceResendingToken);
                 mVerificationId = s;
+                setInvisible();
             }
         };
 
@@ -136,19 +144,28 @@ public class LoginActivity extends AppCompatActivity {
     private void userIsLoggedIn(){
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if(user != null) {
-            startActivity(new Intent(getApplicationContext(), MainActivity.class));
+            startActivity(new Intent(LoginActivity.this, MainActivity.class));
             finish();
-            return;
         }
     }
 
-    private void startPhoneNumberVerification(){
+    private void startPhoneNumberVerification() {
         PhoneAuthProvider.getInstance().verifyPhoneNumber(
-                "+91"+mPhoneNumber.getText().toString(),
+                "+91" + mPhoneNumber.getText().toString(),
                 90,
                 TimeUnit.SECONDS,
                 this,
                 mCallbacks
         );
+    }
+
+    //progress overlay
+
+    public void setInvisible() {
+        progressOverlay.setVisibility(View.INVISIBLE);
+    }
+
+    public void setVisible() {
+        progressOverlay.setVisibility(View.VISIBLE);
     }
 }

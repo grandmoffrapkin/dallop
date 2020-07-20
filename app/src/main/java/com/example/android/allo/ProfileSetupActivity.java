@@ -33,6 +33,7 @@ public class ProfileSetupActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile_setup);
+        getSupportActionBar().hide();
 
         openCamera = findViewById(R.id.open_camera);
         mNext = findViewById(R.id.next);
