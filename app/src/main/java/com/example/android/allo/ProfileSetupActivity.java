@@ -7,6 +7,8 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -32,8 +34,10 @@ public class ProfileSetupActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_NO_TITLE); //will hide the title
+        Objects.requireNonNull(getSupportActionBar()).hide();
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_profile_setup);
-        getSupportActionBar().hide();
 
         openCamera = findViewById(R.id.open_camera);
         mNext = findViewById(R.id.next);
@@ -55,7 +59,7 @@ public class ProfileSetupActivity extends AppCompatActivity {
         mNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (userName.getText().equals(""))
+                if (userName.getText().toString().equals(""))
                     Toast.makeText(ProfileSetupActivity.this, "Please provide a name", Toast.LENGTH_SHORT).show();
                 else {
                     Intent intent = new Intent(ProfileSetupActivity.this, MainActivity.class);
