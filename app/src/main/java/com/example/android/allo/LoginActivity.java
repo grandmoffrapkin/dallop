@@ -149,7 +149,9 @@ public class LoginActivity extends AppCompatActivity {
     private void userIsLoggedIn(){
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if(user != null) {
-            startActivity(new Intent(LoginActivity.this, MainActivity.class));
+            Intent _intent = new Intent(LoginActivity.this, ProfileSetupActivity.class);
+            _intent.putExtra("userPhone", "+91" + mPhoneNumber.getText().toString());
+            startActivity(_intent);
             finish();
         }
     }

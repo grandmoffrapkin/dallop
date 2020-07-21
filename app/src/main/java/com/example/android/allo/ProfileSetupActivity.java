@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.View;
@@ -30,6 +31,7 @@ public class ProfileSetupActivity extends AppCompatActivity {
     Button mNext;
     ImageView profilePicture;
     EditText userName;
+    Uri imageUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +45,7 @@ public class ProfileSetupActivity extends AppCompatActivity {
         mNext = findViewById(R.id.next);
         profilePicture = findViewById(R.id.profile_image);
         userName = findViewById(R.id.user_name);
+        final String userPhone = getIntent().getStringExtra("userPhone");
 
         openCamera.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -63,6 +66,9 @@ public class ProfileSetupActivity extends AppCompatActivity {
                     Toast.makeText(ProfileSetupActivity.this, "Please provide a name", Toast.LENGTH_SHORT).show();
                 else {
                     Intent intent = new Intent(ProfileSetupActivity.this, MainActivity.class);
+                    intent.putExtra("imagePath", imageUri.toString());
+                    intent.putExtra("userName", userName.getText().toString());
+                    intent.putExtra("userPhone", userPhone);
                     startActivity(intent);
                 }
             }
@@ -75,6 +81,7 @@ public class ProfileSetupActivity extends AppCompatActivity {
         if (requestCode == cameraAccessCode) {
             assert data != null;
             Bitmap profile_image = (Bitmap) Objects.requireNonNull(data.getExtras()).get("data");
+            imageUri = data.getData();
             profilePicture.setImageBitmap(profile_image);
         }
     }
