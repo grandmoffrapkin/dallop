@@ -1,11 +1,7 @@
 package com.example.android.allo;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.telephony.TelephonyManager;
@@ -26,6 +22,11 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class FindUserActivity extends AppCompatActivity {
 
@@ -94,7 +95,7 @@ public class FindUserActivity extends AppCompatActivity {
                 phone = ISOPrefix + phone;
 
 
-            UserObject mContact = new UserObject("", name, phone);
+            UserObject mContact = new UserObject("", name, phone, null);
             contactList.add(mContact);
             mUserListAdapter.notifyDataSetChanged();
             getUserDetails(mContact);
@@ -103,25 +104,32 @@ public class FindUserActivity extends AppCompatActivity {
 
     private void getUserDetails(UserObject mContact) {
         DatabaseReference mUserDB = FirebaseDatabase.getInstance().getReference().child("user");
+
         Query query = mUserDB.orderByChild("phone").equalTo(mContact.getPhone());
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if(dataSnapshot.exists()){
-                    String  phone = "",
+                if(dataSnapshot.exists()) {
+                    String phone = "",
                             name = "";
-                    for(DataSnapshot childSnapshot : dataSnapshot.getChildren()){
-                        if(childSnapshot.child("phone").getValue() != null)
+
+                    Uri imageUri = null;
+
+                    for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
+                        if (childSnapshot.child("phone").getValue() != null)
                             phone = childSnapshot.child("phone").getValue().toString();
 
-                        if(childSnapshot.child("name").getValue() != null)
+                        if (childSnapshot.child("name").getValue() != null)
                             name = childSnapshot.child("name").getValue().toString();
 
-                        UserObject mUser = new UserObject( childSnapshot.getKey(), name, phone);
+                        if (childSnapshot.child("profileImage").getValue() != null)
+                            imageUri = (Uri) childSnapshot.child("profileImage").getValue();
 
-                        if(name.equals(phone)){
-                            for(UserObject mContactIterator : contactList){
-                                if(mContactIterator.getPhone().equals(mUser.getPhone())){
+                        UserObject mUser = new UserObject(childSnapshot.getKey(), name, phone, imageUri);
+
+                        if (name.equals(phone)) {
+                            for (UserObject mContactIterator : contactList) {
+                                if (mContactIterator.getPhone().equals(mUser.getPhone())) {
                                     mUser.setName(mContactIterator.getName());
                                 }
                             }
@@ -145,9 +153,9 @@ public class FindUserActivity extends AppCompatActivity {
         String iso = null;
 
         TelephonyManager telephonyManager = (TelephonyManager) getApplicationContext().getSystemService(getApplicationContext().TELEPHONY_SERVICE);
-        if(telephonyManager.getNetworkCountryIso() != null)
-            if(!telephonyManager.getNetworkCountryIso().toString().equals(""))
-                iso = telephonyManager.getNetworkCountryIso().toString();
+        if (telephonyManager.getNetworkCountryIso() != null)
+            if (!telephonyManager.getNetworkCountryIso().equals(""))
+                iso = telephonyManager.getNetworkCountryIso();
         return CountryToCodePrefix.getPhone(iso);
     }
 

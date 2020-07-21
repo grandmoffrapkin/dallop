@@ -1,10 +1,13 @@
 package com.example.android.allo.User;
 
+import android.net.Uri;
+
 import java.io.Serializable;
 
 public class UserObject implements Serializable {
 
     private String uid, name, phone, notificationKey;
+    private Uri imageUri;
 
     private Boolean selected = false;
 
@@ -12,10 +15,11 @@ public class UserObject implements Serializable {
         this.uid = uid;
     }
 
-    public UserObject(String uid, String name, String phone){
+    public UserObject(String uid, String name, String phone, Uri imageUri) {
         this.uid = uid;
         this.name = name;
         this.phone = phone;
+        this.imageUri = imageUri;
     }
 
     public String getUid() {
@@ -30,6 +34,10 @@ public class UserObject implements Serializable {
         return phone;
     }
 
+    public Uri getImageUri() {
+        return imageUri;
+    }
+
     public String getNotificationKey() {
         return notificationKey;
     }
@@ -40,6 +48,10 @@ public class UserObject implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public void setImageUri(Uri imageUri) {
+        this.imageUri = imageUri;
     }
 
     public void setNotificationKey(String notificationKey) {

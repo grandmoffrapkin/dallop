@@ -1,6 +1,7 @@
 package com.example.android.allo;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -15,6 +16,19 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.util.Objects;
 
@@ -65,11 +79,47 @@ public class ProfileSetupActivity extends AppCompatActivity {
                 if (userName.getText().toString().equals(""))
                     Toast.makeText(ProfileSetupActivity.this, "Please provide a name", Toast.LENGTH_SHORT).show();
                 else {
-                    Intent intent = new Intent(ProfileSetupActivity.this, MainActivity.class);
-                    intent.putExtra("imagePath", imageUri.toString());
-                    intent.putExtra("userName", userName.getText().toString());
-                    intent.putExtra("userPhone", userPhone);
-                    startActivity(intent);
+
+                    final ProgressDialog progressDialog
+                            = new ProgressDialog(ProfileSetupActivity.this);
+                    progressDialog.setTitle("Loading...");
+                    progressDialog.show();
+
+                    final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    if (user != null) {
+                        final DatabaseReference mUserDB = FirebaseDatabase.getInstance().getReference().child("user").child(user.getUid());
+                        final StorageReference ref = FirebaseStorage.getInstance().getReference().child("user").child(user.getUid()).child("profileImage");
+
+                        mUserDB.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                if (snapshot.exists()) {
+                                    ref.putFile(imageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                        @Override
+                                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                            progressDialog.dismiss();
+                                            Intent intent = new Intent(ProfileSetupActivity.this, MainActivity.class);
+                                            intent.putExtra("imagePath", imageUri.toString());
+                                            intent.putExtra("userName", userName.getText().toString());
+                                            intent.putExtra("userPhone", userPhone);
+                                            startActivity(intent);
+                                        }
+                                    }).addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            progressDialog.dismiss();
+                                            Toast.makeText(ProfileSetupActivity.this, "Failed " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+
+                            }
+                        });
+                    }
                 }
             }
         });
