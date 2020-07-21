@@ -58,13 +58,14 @@ public class FindUserActivity extends AppCompatActivity {
     private void createChat(){
         String key = FirebaseDatabase.getInstance().getReference().child("chat").push().getKey();
         DatabaseReference userDb = FirebaseDatabase.getInstance().getReference().child("user");
+        assert key != null;
         DatabaseReference chatInfoDb = FirebaseDatabase.getInstance().getReference().child("chat").child(key).child("info");
 
-        HashMap newChatMap = new HashMap();
+        HashMap<String, Object> newChatMap = new HashMap<String, Object>();
         newChatMap.put("id", key);
         newChatMap.put("users/" + FirebaseAuth.getInstance().getUid(), true);
 
-        Boolean validChat = false;
+        boolean validChat = false;
         for(UserObject mUser : userList){
             if(mUser.getSelected()){
                 validChat = true;
@@ -82,6 +83,7 @@ public class FindUserActivity extends AppCompatActivity {
     private void getContactList(){
         String ISOPrefix = getCountryISO();
         Cursor phones = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
+        assert phones != null;
         while(phones.moveToNext()){
             String name = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
             String phone = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
@@ -117,10 +119,10 @@ public class FindUserActivity extends AppCompatActivity {
 
                     for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
                         if (childSnapshot.child("phone").getValue() != null)
-                            phone = childSnapshot.child("phone").getValue().toString();
+                            phone = Objects.requireNonNull(childSnapshot.child("phone").getValue()).toString();
 
                         if (childSnapshot.child("name").getValue() != null)
-                            name = childSnapshot.child("name").getValue().toString();
+                            name = Objects.requireNonNull(childSnapshot.child("name").getValue()).toString();
 
                         if (childSnapshot.child("profileImage").getValue() != null)
                             imageUri = (Uri) childSnapshot.child("profileImage").getValue();
@@ -152,10 +154,11 @@ public class FindUserActivity extends AppCompatActivity {
     private String getCountryISO(){
         String iso = null;
 
-        TelephonyManager telephonyManager = (TelephonyManager) getApplicationContext().getSystemService(getApplicationContext().TELEPHONY_SERVICE);
+        TelephonyManager telephonyManager = (TelephonyManager) getApplicationContext().getSystemService(TELEPHONY_SERVICE);
         if (telephonyManager.getNetworkCountryIso() != null)
             if (!telephonyManager.getNetworkCountryIso().equals(""))
                 iso = telephonyManager.getNetworkCountryIso();
+        assert iso != null;
         return CountryToCodePrefix.getPhone(iso);
     }
 
