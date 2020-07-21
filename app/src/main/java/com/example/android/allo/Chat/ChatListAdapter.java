@@ -1,18 +1,15 @@
 package com.example.android.allo.Chat;
 
 import android.content.Intent;
-import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.android.allo.ChatActivity;
 import com.example.android.allo.R;
-import com.example.android.allo.Chat.ChatObject;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 
@@ -39,7 +36,9 @@ public class ChatListAdapter extends RecyclerView.Adapter<com.example.android.al
 
     @Override
     public void onBindViewHolder(@NonNull final ChatListViewHolder holder, final int position) {
-        holder.mTitle.setText(chatList.get(position).getChatId());
+        holder.mContactName.setText(chatList.get(position).getContactName());
+        holder.mLastMessage.setText(chatList.get(position).getLastMessage());
+        holder.mProfilePicture.setImageURI(chatList.get(position).getProfileImageUri());
 
         holder.mLayout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -57,14 +56,17 @@ public class ChatListAdapter extends RecyclerView.Adapter<com.example.android.al
     }
 
 
-    public class ChatListViewHolder extends RecyclerView.ViewHolder{
+    public static class ChatListViewHolder extends RecyclerView.ViewHolder {
 
-        public TextView mTitle;
+        public TextView mContactName, mLastMessage;
+        public ImageView mProfilePicture;
         public LinearLayout mLayout;
 
-        public ChatListViewHolder(View view){
+        public ChatListViewHolder(View view) {
             super(view);
-            mTitle = view.findViewById(R.id.title);
+            mContactName = view.findViewById(R.id.contact_name);
+            mLastMessage = view.findViewById(R.id.last_message);
+            mProfilePicture = view.findViewById(R.id.profile_image);
             mLayout = view.findViewById(R.id.layout);
         }
     }

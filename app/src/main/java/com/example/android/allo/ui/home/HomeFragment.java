@@ -1,26 +1,16 @@
 package com.example.android.allo.ui.home;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProviders;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.android.allo.Chat.ChatListAdapter;
 import com.example.android.allo.Chat.ChatObject;
 import com.example.android.allo.LoginActivity;
-import com.example.android.allo.MainActivity;
 import com.example.android.allo.R;
-import com.example.android.allo.User.UserListAdapter;
 import com.example.android.allo.User.UserObject;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -32,9 +22,12 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.Objects;
 
-public class HomeFragment extends Fragment {
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-    private HomeViewModel homeViewModel;
+public class HomeFragment extends Fragment {
 
 
     private RecyclerView mChatList;
@@ -45,16 +38,9 @@ public class HomeFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        homeViewModel =
-                ViewModelProviders.of(this).get(HomeViewModel.class);
+//        HomeViewModel homeViewModel;
+//        homeViewModel = ViewModelProviders.of(this).get(HomeViewModel.class);
         View root = inflater.inflate(R.layout.fragment_home, container, false);
-//        final TextView textView = root.findViewById(R.id.text_home);
-//        homeViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
-//            @Override
-//            public void onChanged(@Nullable String s) {
-//                textView.setText(s);
-//            }
-//        });
 
         chatList = new ArrayList<>();
 
@@ -75,19 +61,33 @@ public class HomeFragment extends Fragment {
     }
 
     private void getUserChatList(){
-        DatabaseReference mUserChatDB = FirebaseDatabase.getInstance().getReference().child("user").child(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser().getUid())).child("chat");
+        DatabaseReference mUserChatDB = FirebaseDatabase.getInstance().getReference().child("user").child(Objects.requireNonNull(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid())).child("chat");
         mUserChatDB.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if(dataSnapshot.exists()){
-                    for( DataSnapshot childSnapshot : dataSnapshot.getChildren()){
-                        ChatObject mChat = new ChatObject(childSnapshot.getKey());
+                if(dataSnapshot.exists()) {
+                    String phone = "",
+                            name = "";
+
+                    Uri imageUri = null;
+                    for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
+                        if (childSnapshot.child("phone").getValue() != null)
+                            phone = Objects.requireNonNull(childSnapshot.child("phone").getValue()).toString();
+
+                        if (childSnapshot.child("name").getValue() != null)
+                            name = Objects.requireNonNull(childSnapshot.child("name").getValue()).toString();
+
+                        if (childSnapshot.child("profileImage").getValue() != null)
+                            imageUri = (Uri) childSnapshot.child("profileImage").getValue();
+                        ChatObject mChat = new ChatObject(childSnapshot.getKey(), name, phone, imageUri);
                         boolean exists = false;
-                        for(ChatObject mChatIterator : chatList){
-                            if(mChatIterator.getChatId().equals(mChat.getChatId()))
+                        for (ChatObject mChatIterator : chatList) {
+                            if (mChatIterator.getChatId().equals(mChat.getChatId())) {
                                 exists = true;
+                                break;
+                            }
                         }
-                        if(exists) continue;
+                        if (exists) continue;
                         chatList.add(mChat);
                         getChatData(mChat.getChatId());
                     }
@@ -107,7 +107,7 @@ public class HomeFragment extends Fragment {
                 if(snapshot.exists()){
                     String chatId = "";
                     if(snapshot.child("id").getValue() != null)
-                        chatId = snapshot.child("id").getValue().toString();
+                        chatId = Objects.requireNonNull(snapshot.child("id").getValue()).toString();
 
                     for(DataSnapshot userSnapshot : snapshot.child("users").getChildren()){
                         for(ChatObject mChat : chatList){
