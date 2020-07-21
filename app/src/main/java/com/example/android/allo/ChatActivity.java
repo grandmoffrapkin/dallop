@@ -1,17 +1,12 @@
 package com.example.android.allo;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 
 import com.example.android.allo.Chat.ChatObject;
 import com.example.android.allo.Chat.MediaAdapter;
@@ -35,10 +30,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 public class ChatActivity extends AppCompatActivity {
 
     private RecyclerView mChat, mMedia;
-    private RecyclerView.Adapter mChatAdapter, mMediaAdapter;
+    ImageButton mSnapStack;
+    private RecyclerView.Adapter mChatAdapter;
     private RecyclerView.LayoutManager mChatLayoutManager, mMediaLayoutManager;
 
     ArrayList<MessageObject> messageList;
@@ -46,6 +48,7 @@ public class ChatActivity extends AppCompatActivity {
     ChatObject mChatObject;
 
     DatabaseReference mChatMessagesDb;
+    private RecyclerView.Adapter<MediaAdapter.MediaViewHolder> mMediaAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +61,9 @@ public class ChatActivity extends AppCompatActivity {
 
         Button mSend = findViewById(R.id.send);
         Button mAddMedia = findViewById(R.id.addMedia);
+
+        mSnapStack = findViewById(R.id.snap_stack);
+        mSnapStack.setVisibility(View.VISIBLE);
 
         mSend.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -74,7 +80,13 @@ public class ChatActivity extends AppCompatActivity {
         });
 
         initializeMessage();
-        initializeMedia();
+
+        mSnapStack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                initializeMedia();
+            }
+        });
         getChatMessages();
     }
 
@@ -89,14 +101,14 @@ public class ChatActivity extends AppCompatActivity {
                     ArrayList<String> mediaUrlList = new ArrayList<>();
 
                     if(dataSnapshot.child("text").getValue() != null)
-                        text = dataSnapshot.child("text").getValue().toString();
+                        text = Objects.requireNonNull(dataSnapshot.child("text").getValue()).toString();
 
                     if(dataSnapshot.child("creator").getValue() != null)
-                        creatorID = dataSnapshot.child("creator").getValue().toString();
+                        creatorID = Objects.requireNonNull(dataSnapshot.child("creator").getValue()).toString();
 
                     if(dataSnapshot.child("media").getChildrenCount() > 0)
                         for(DataSnapshot mediaSnapshot : dataSnapshot.child("media").getChildren())
-                            mediaUrlList.add(mediaSnapshot.getValue().toString());
+                            mediaUrlList.add(Objects.requireNonNull(mediaSnapshot.getValue()).toString());
 
                         MessageObject mMessage = new MessageObject(dataSnapshot.getKey(), creatorID, text, mediaUrlList);
 
@@ -134,9 +146,10 @@ public class ChatActivity extends AppCompatActivity {
     private void sendMessage(){
         mMessage = findViewById(R.id.message);
         String messageId = mChatMessagesDb.push().getKey();
+        assert messageId != null;
         final DatabaseReference newMessageDb = mChatMessagesDb.child(messageId);
 
-        final Map newMessageMap = new HashMap<>();
+        final Map<String, Object> newMessageMap = new HashMap<>();
 
         newMessageMap.put("creator", FirebaseAuth.getInstance().getUid());
 
@@ -147,6 +160,7 @@ public class ChatActivity extends AppCompatActivity {
             for(String mediaUri : mediaUriList){
                 final String mediaId = newMessageDb.child("media").push().getKey();
                 mediaIdList.add(mediaId);
+                assert mediaId != null;
                 final StorageReference filePath = FirebaseStorage.getInstance().getReference().child("chat").child(mChatObject.getChatId()).child(messageId).child(mediaId);
 
                 UploadTask uploadTask = filePath.putFile(Uri.parse(mediaUri));
@@ -175,7 +189,7 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
-    private void updateDatabaseWithNewMessage(DatabaseReference newMessageDb, Map newMessageMep){
+    private void updateDatabaseWithNewMessage(DatabaseReference newMessageDb, Map<String, Object> newMessageMep) {
         newMessageDb.updateChildren(newMessageMep);
         mMessage.setText(null);
         mediaUriList.clear();
@@ -184,8 +198,8 @@ public class ChatActivity extends AppCompatActivity {
 
         String message;
 
-        if(newMessageMep.get("text") != null)
-            message = newMessageMep.get("text").toString();
+        if (newMessageMep.get("text") != null)
+            message = Objects.requireNonNull(newMessageMep.get("text")).toString();
         else
             message = "Media";
 
@@ -202,7 +216,7 @@ public class ChatActivity extends AppCompatActivity {
         mChat = findViewById(R.id.messageList);
         mChat.setNestedScrollingEnabled(false);
         mChat.setHasFixedSize(false);
-        mChatLayoutManager = new LinearLayoutManager(getApplicationContext(), RecyclerView.VERTICAL, false);
+        mChatLayoutManager = new LinearLayoutManager(getApplicationContext(), RecyclerView.HORIZONTAL, false);
         mChat.setLayoutManager(mChatLayoutManager);
         mChatAdapter = new MessageAdapter(messageList);
         mChat.setAdapter(mChatAdapter);
@@ -226,23 +240,25 @@ public class ChatActivity extends AppCompatActivity {
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-        intent.setAction(intent.ACTION_GET_CONTENT);
-        startActivityForResult(intent.createChooser(intent, "Select picture(s)"), PICK_IMAGE_INTENT);
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(Intent.createChooser(intent, "Select picture(s)"), PICK_IMAGE_INTENT);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(resultCode == RESULT_OK){
-            if(requestCode == PICK_IMAGE_INTENT)
-                if(data.getClipData() == null){
-                    mediaUriList.add(data.getData().toString());
-                } else{
-                    for (int i = 0; i < data.getClipData().getItemCount(); i++){
+        if(resultCode == RESULT_OK) {
+            if (requestCode == PICK_IMAGE_INTENT) {
+                assert data != null;
+                if (data.getClipData() == null) {
+                    mediaUriList.add(Objects.requireNonNull(data.getData()).toString());
+                } else {
+                    for (int i = 0; i < data.getClipData().getItemCount(); i++) {
                         mediaUriList.add(data.getClipData().getItemAt(i).getUri().toString());
                     }
                 }
-                mMediaAdapter.notifyDataSetChanged();
+            }
+            mMediaAdapter.notifyDataSetChanged();
         }
     }
 }
