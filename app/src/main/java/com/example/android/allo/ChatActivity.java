@@ -1,8 +1,12 @@
 package com.example.android.allo;
 
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -25,6 +29,12 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,6 +59,9 @@ public class ChatActivity extends AppCompatActivity {
 
     DatabaseReference mChatMessagesDb;
     private RecyclerView.Adapter<MediaAdapter.MediaViewHolder> mMediaAdapter;
+
+    int PICK_IMAGE_INTENT = 1;
+    ArrayList<String> mediaUriList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,12 +94,6 @@ public class ChatActivity extends AppCompatActivity {
 
         initializeMessage();
 
-        mSnapStack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                initializeMedia();
-            }
-        });
         getChatMessages();
     }
 
@@ -106,15 +113,25 @@ public class ChatActivity extends AppCompatActivity {
                     if(dataSnapshot.child("creator").getValue() != null)
                         creatorID = Objects.requireNonNull(dataSnapshot.child("creator").getValue()).toString();
 
-                    if(dataSnapshot.child("media").getChildrenCount() > 0)
-                        for(DataSnapshot mediaSnapshot : dataSnapshot.child("media").getChildren())
+                    if (dataSnapshot.child("media").getChildrenCount() > 0)
+                        for (DataSnapshot mediaSnapshot : dataSnapshot.child("media").getChildren())
                             mediaUrlList.add(Objects.requireNonNull(mediaSnapshot.getValue()).toString());
 
-                        MessageObject mMessage = new MessageObject(dataSnapshot.getKey(), creatorID, text, mediaUrlList);
+                    MessageObject mMessage = new MessageObject(dataSnapshot.getKey(), creatorID, text);
 
                     messageList.add(mMessage);
-                    mChatLayoutManager.scrollToPosition(messageList.size()-1);
+                    mChatLayoutManager.scrollToPosition(messageList.size() - 1);
                     mChatAdapter.notifyDataSetChanged();
+
+                    if (!mediaUriList.isEmpty()) {
+                        //check for storage read and write permissions
+
+                        //get Bitmap from Uris
+                        for (String mediaUri : mediaUrlList) {
+                            Bitmap image = getContactBitmapFromUri(ChatActivity.this, Uri.parse(mediaUri));
+                            saveBitmapToStorage(ChatActivity.this, image, creatorID, mMessage.getMessageId());
+                        }
+                    }
                 }
             }
 
@@ -222,9 +239,6 @@ public class ChatActivity extends AppCompatActivity {
         mChat.setAdapter(mChatAdapter);
     }
 
-    int PICK_IMAGE_INTENT = 1;
-    ArrayList<String> mediaUriList = new ArrayList<>();
-
     private void initializeMedia(){
         mediaUriList = new ArrayList<>();
         mMedia = findViewById(R.id.mediaList);
@@ -259,6 +273,32 @@ public class ChatActivity extends AppCompatActivity {
                 }
             }
             mMediaAdapter.notifyDataSetChanged();
+        }
+    }
+
+    //Getting bitmap from Uris
+    public Bitmap getContactBitmapFromUri(Context context, Uri uri) {
+        try {
+            InputStream inputStream = context.getContentResolver().openInputStream(uri);
+            if (inputStream == null) return null;
+            return BitmapFactory.decodeStream(inputStream);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    //Saving bitmap to storage
+    public void saveBitmapToStorage(Context context, Bitmap finalBitmap, String creatorId, String messageId) {
+        String root = Environment.getExternalStorageDirectory().toString();
+        File mFile = new File("./" + creatorId, messageId + ".jpg");
+        try {
+            OutputStream outputStream = new FileOutputStream(mFile);
+            finalBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+            outputStream.flush();
+            outputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

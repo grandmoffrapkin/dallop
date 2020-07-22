@@ -1,17 +1,13 @@
 package com.example.android.allo.Chat;
 
-import java.util.ArrayList;
-
 public class MessageObject {
 
     String messageId, senderId, message;
-    ArrayList<String> mediaUrlList;
 
-    public MessageObject(String messageId, String senderId, String message, ArrayList<String> mediaUrlList) {
+    public MessageObject(String messageId, String senderId, String message) {
         this.messageId = messageId;
         this.senderId = senderId;
         this.message = message;
-        this.mediaUrlList = mediaUrlList;
     }
 
     public void setMessage(String message) {
@@ -28,10 +24,6 @@ public class MessageObject {
 
     public String getMessageId() {
         return messageId;
-    }
-
-    public ArrayList<String> getMediaUrlList() {
-        return mediaUrlList;
     }
 
     public void getCreatedAt() {
